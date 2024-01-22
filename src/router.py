@@ -33,7 +33,7 @@ async def get_models(session=Depends(get_session)) -> ModelListScheme:
 
 
 @router.get("/predictions")
-async def get_user_predictions(user=Depends(get_current_user), session=Depends(get_session)) -> PredictionScheme:
+async def get_user_predictions(session= Depends(get_session), user= Depends(get_current_user)) -> PredictionScheme:
     predictions = get_predictions_by_user_id(user.id, session)
     if predictions is None:
         return PredictionScheme(predictions=[])
@@ -43,7 +43,7 @@ async def get_user_predictions(user=Depends(get_current_user), session=Depends(g
                 id=prediction.id,
                 predicted_model_id=prediction.model_id,
                 input_data=prediction.input_data,
-                result=prediction.predicted_class_id,
+                result=prediction.predicted_class_id[0],
             )
             for prediction in predictions
         ]
@@ -70,7 +70,6 @@ async def predict(
             res = catboost_model_predict(df)
         case _:
             raise ValueError
-    print(res)
     prediction = prediction_create(user.id, model.id, data.data, res, session)
     return {"model_id": prediction.model_id, "input_data": prediction.input_data, "predicted_class_id": prediction.predicted_class_id[0]}
 
